@@ -1,0 +1,90 @@
+package chachong;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public class PlagiarismChecker {
+    public static void main(String[] args) {
+        String file1Path = "C:/Users/葛炜伟/Desktop/论文查重/现文.txt";
+        String file2Path = "C:/Users/葛炜伟/Desktop/论文查重/原文.txt";
+
+        try {
+            String file1Content = readFileContent(file1Path);
+            String file2Content = readFileContent(file2Path);
+            // 在这里可以对文件内容进行处理或比较
+            System.out.println("文件1的内容：");
+            System.out.println(file1Content);
+            System.out.println("文件2的内容：");
+            System.out.println(file2Content);
+            // 将原文和抄袭版论文分词并去重
+            String[] originalWords = file1Content.split("[,，。；;：:\\s]+");
+            String[] copiedWords = file2Content.split("[,，。；;：:\\s]+");
+            // 统计词频向量
+            Map<String, Integer> originalVector = getWordFrequency(originalWords);
+            Map<String, Integer> copiedVector = getWordFrequency(copiedWords);
+            // 计算余弦相似度
+            double similarity = cosineSimilarity(originalVector, copiedVector);
+            // 计算重复率
+            double plagiarismRate = similarity * 100;
+            System.out.println("原文词列表：" + Arrays.toString(originalWords));
+            System.out.println("抄袭版论文词列表：" + Arrays.toString(copiedWords));
+            System.out.println("原文词频向量：" + originalVector);
+            System.out.println("抄袭版论文词频向量：" + copiedVector);
+            System.out.println("相似度：" + similarity);
+            System.out.println("重复率：" + plagiarismRate + "%");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String readFileContent(String filePath) throws IOException {
+        StringBuilder content = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            content.append(line);
+            content.append(System.lineSeparator());
+        }
+
+        reader.close();
+
+        return content.toString();
+    }
+
+    // 统计词频
+    private static Map<String, Integer> getWordFrequency(String[] words) {
+        Map<String, Integer> wordFrequency = new HashMap<>();
+        for (String word : words) {
+            wordFrequency.put(word, wordFrequency.getOrDefault(word, 0) + 1);
+        }
+        return wordFrequency;
+    }
+
+    // 计算余弦相似度
+    private static double cosineSimilarity(Map<String, Integer> vector1, Map<String, Integer> vector2) {
+        double dotProduct = 0;
+        double norm1 = 0;
+        double norm2 = 0;
+
+        for (Map.Entry<String, Integer> entry : vector1.entrySet()) {
+            String word = entry.getKey();
+            int count1 = entry.getValue();
+            int count2 = vector2.getOrDefault(word, 0);
+
+            dotProduct += count1 * count2;
+            norm1 += count1 * count1;
+        }
+
+        for (int count : vector2.values()) {
+            norm2 += count * count;
+        }
+
+        double similarity = dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+        return similarity;
+    }
+}
